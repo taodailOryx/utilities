@@ -42,14 +42,14 @@ class MatchedMap:
         """ Validate input and perform any setup.
         :returnval None:
         """
+        if not self.names_list:
+            raise ValueError('Provide a list of strings of names')
+
         for k, v in self.mandatory_matches.items():
             if k not in self.names_list:
                 raise ValueError(f'"{k}" present as a mandatory match, but not found in the names list')
             if v not in self.names_list:
                 raise ValueError(f'"{v}" present as a mandatory match, but not found in the names list')
-
-        if not self.names_list:
-            raise ValueError('Provide a list of strings of names')
 
         duplicate_names: set[str] = set(
             [
