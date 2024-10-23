@@ -16,17 +16,25 @@
 import copy
 import random
 
+from pathlib import Path
+
 
 class MatchedMap:
-    def __init__(self, names_list: list[str]) -> None:
+    """ If a directory named `.bs/` exists in this directory, and a file named `names`
+    exists in that directory, a list of names will be pulled from that file automatically
+    when this file is executed.
+    """
+    def __init__(self, names_list: list[str], mandatory_matches: dict[str, str]) -> None:
         self.names_list: list[str] = names_list
         self.names: list[str] = []
+
+        self.mandatory_matches: dict[str, str] = mandatory_matches
 
         self.match_to_self: bool = False
         self.match_to_reciprocal: bool = False
         self.randomize_name_order: bool = False
-        self.__forbidden_matches: dict[str, str] = {}
 
+        self.__forbidden_matches: dict[str, str] = {}
         self.__last_map: dict[str, str] = {}
         self.__validate_setup()
 
@@ -72,8 +80,9 @@ class MatchedMap:
         """
         if not names:
             return current_mm
-        if not current_mm.keys():
-            for name in names:
+
+        for name in names:
+            if name not in current_mm.keys():
                 current_mm[name] = ''
 
         for key_name in current_mm.keys():
@@ -98,7 +107,7 @@ class MatchedMap:
                     return new_map
                 else:
                     continue
-        return {}
+        return current_mm or {}
 
     def set_forbidden_matches(self, forbidden_dict: dict[str, str]) -> None:
         """ Pass a dictionary with any forbidden matches.
@@ -130,12 +139,19 @@ class MatchedMap:
             raise ValueError('Number of names must be even for reciprocal matching')
 
         if self.randomize_name_order:
+            # Randomize the order so the generation is not deterministic (i.e., the first correct
+            # solution found should be different each time [subject to the whims of the PRNG])
             self.__shuffle_names()
 
-        matched_map: dict[str, str] = self.__recursive_mm_gen(self.names, {})
+        matched_map: dict[str, str] = self.__recursive_mm_gen(self.names, self.mandatory_matches)
 
         if not matched_map:
             raise ValueError('Cannot generate map')
+
+        # We have to randomize again, otherwise the mandatory matches always come out first
+        values: list[tuple] = [_ for _ in matched_map.items()]
+        random.shuffle(values)
+        matched_map = dict(values)
 
         self.__last_map = matched_map
 
@@ -174,7 +190,9 @@ if __name__ == '__main__':
     if len(names_list) < 2:
         raise ValueError('Enter at least 2 names')
 
-    mm: MatchedMap = MatchedMap(names_list)
+    mandatory_matches: dict[str, str] = {}
+
+    mm: MatchedMap = MatchedMap(names_list=names_list, mandatory_matches=mandatory_matches)
     mm.randomize_name_order = True
     matches: dict[str, str] = mm.generate_matched_map()
 
