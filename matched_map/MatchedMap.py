@@ -7,7 +7,7 @@
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
@@ -148,3 +148,35 @@ class MatchedMap:
         return self.__last_map
 
 
+if __name__ == '__main__':
+    names_file_path: Path = Path('./.bs/names')
+    names_list: list[str] = []
+
+    if names_file_path.exists():
+        with open(names_file_path, encoding='utf8') as f:
+            names_list = [n.strip() for n in f.readlines()]
+    else:
+        sentinel_value: str = '$$END$$'
+
+        print(f'When done entering names, enter {sentinel_value}.')
+        print('Enter names now, each followed by ENTER key:')
+
+        while True:
+            name: str = input().strip()
+
+            if name == sentinel_value:
+                print(f'\n{"-" * 80}\n')
+                break
+
+            if name:
+                names_list.append(name)
+
+    if len(names_list) < 2:
+        raise ValueError('Enter at least 2 names')
+
+    mm: MatchedMap = MatchedMap(names_list)
+    mm.randomize_name_order = True
+    matches: dict[str, str] = mm.generate_matched_map()
+
+    for k, v in matches.items():
+        print(f'{k} → {v}')
